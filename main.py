@@ -29,9 +29,11 @@ def fetch_yfinance_stock_data(symbol):
 # Function to interact with Gemini AI for stock-related queries
 def get_gemini_response(symbol):
     prompt_template = (
-        "You are an intelligent assistant with expertise in stock market analysis. "
-        "Provide detailed insights or analysis on the following stock:\n\n"
-        "Stock: {}\n"
+        ""You are an intelligent assistant with expertise in stock market analysis. Provide a comprehensive analysis of the following stock, including performance trends, financial ratios, and outlook based on recent news. Also, assess the company's dividend history and payout consistency, comparing it with other similar stocks to determine if it offers a better dividend yield."
+
+"Stock: {}"
+
+\n"
         "Analysis:"
     )
 
