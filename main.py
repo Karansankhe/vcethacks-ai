@@ -1,3 +1,355 @@
+
+
+--------------------------------EDA------------------------------------
+# Import necessary libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the dataset
+df = pd.read_csv('EDA-HEALTHCARE.csv')
+
+# Convert the 'ScheduledDay' and 'AppointmentDay' to datetime format
+df['ScheduledDay'] = pd.to_datetime(df['ScheduledDay'])
+df['AppointmentDay'] = pd.to_datetime(df['AppointmentDay'])
+
+# Convert categorical columns to numeric using label encoding for correlation
+df_encoded = df.copy()
+df_encoded['Gender'] = df_encoded['Gender'].map({'M': 0, 'F': 1})
+df_encoded['No-show'] = df_encoded['No-show'].map({'No': 0, 'Yes': 1})
+
+# Exclude non-numeric columns for correlation (dates and strings)
+df_encoded = df_encoded.drop(columns=['PatientId', 'AppointmentID', 'ScheduledDay', 'AppointmentDay', 'Neighbourhood'])
+
+# ---------------- Univariate Non-Graphical Analysis ----------------
+# Summary statistics of the dataset
+univariate_nongraphical = df.describe(include='all')
+print("Univariate Non-Graphical Analysis:")
+print(univariate_nongraphical)
+
+# Count the unique values in categorical columns
+print("\nGender count:")
+print(df['Gender'].value_counts())
+
+print("\nScholarship count:")
+print(df['Scholarship'].value_counts())
+
+print("\nNo-show count:")
+print(df['No-show'].value_counts())
+
+# ---------------- Multivariate Non-Graphical Analysis ----------------
+# Correlation matrix for numerical features after encoding
+correlation_matrix = df_encoded.corr()
+print("\nMultivariate Non-Graphical Analysis (Correlation Matrix):")
+print(correlation_matrix)
+
+# Group by 'No-show' and calculate the mean only for numeric columns
+numeric_columns = df.select_dtypes(include=['number']).columns
+multivariate_nongraphical = df.groupby('No-show')[numeric_columns].mean()
+
+print("\nGroup by 'No-show' (mean of numeric columns):")
+print(multivariate_nongraphical)
+
+# ---------------- Univariate Graphical Analysis ----------------
+# Age distribution
+plt.figure(figsize=(10,6))
+sns.histplot(df['Age'], bins=30, kde=True)
+plt.title('Age Distribution')
+plt.xlabel('Age')
+plt.ylabel('Frequency')
+plt.show()
+
+# Gender distribution
+plt.figure(figsize=(6,4))
+sns.countplot(x='Gender', data=df)
+plt.title('Gender Distribution')
+plt.show()
+
+# ---------------- Multivariate Graphical Analysis ----------------
+# Plot correlation matrix using a heatmap
+plt.figure(figsize=(10,6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f')
+plt.title('Correlation Heatmap')
+plt.show()
+
+# Boxplot for Age by Gender
+plt.figure(figsize=(8,6))
+sns.boxplot(x='Gender', y='Age', data=df)
+plt.title('Age Distribution by Gender')
+plt.xlabel('Gender')
+plt.ylabel('Age')
+plt.xticks([0, 1], ['Male', 'Female'])
+plt.show()
+
+# Pairplot for multivariate analysis
+sns.pairplot(df_encoded, diag_kind='kde')
+plt.suptitle('Pairplot of Numeric Features', y=1.02)
+plt.show()
+
+# SMS received vs No-show
+plt.figure(figsize=(6,4))
+sns.countplot(x='SMS_received', hue='No-show', data=df)
+plt.title('SMS Received vs No-show')
+plt.show()
+
+
+---------------------------------diabetes prediction--------------------------
+# Import necessary libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# Load the dataset
+df = pd.read_csv('diabetes.csv')
+
+# Remove outliers
+Q1 = df.quantile(0.25)
+Q3 = df.quantile(0.75)
+IQR = Q3 - Q1
+df_out = df[~((df < (Q1 - 1.5 * IQR)) | (df > (Q3 + 1.5 * IQR))).any(axis=1)]
+
+# Extract Features and Targets
+X = df_out.drop(columns=['Outcome'])
+y = df_out['Outcome']
+
+# Splitting train-test data (80-20 ratio)
+train_X, test_X, train_y, test_y = train_test_split(X, y, test_size=0.2)
+
+# Logistic Regression Model
+clf_log = LogisticRegression(solver='lbfgs', max_iter=1000)
+clf_log.fit(train_X, train_y)
+y_pred_log = clf_log.predict(test_X)
+log_accuracy = accuracy_score(test_y, y_pred_log)
+print(f"Logistic Regression Accuracy: {log_accuracy:.2f}")
+
+# Random Forest Model
+clf_rf = RandomForestClassifier()
+clf_rf.fit(train_X, train_y)
+y_pred_rf = clf_rf.predict(test_X)
+rf_accuracy = accuracy_score(test_y, y_pred_rf)
+print(f"Random Forest Accuracy: {rf_accuracy:.2f}")
+
+
+--------------------------------diabetes clean-----------------------
+# -*- coding: utf-8 -*-
+"""Healthcare Data Collection, Cleaning, Integration, and Transformation"""
+
+# Import libraries
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Load the dataset
+df = pd.read_csv("diabetes.csv")
+
+# Display the first few rows of the dataframe
+print("First few rows of the dataset:")
+print(df.head())
+
+# Display descriptive statistics
+print("\nDescriptive statistics:")
+print(df.describe())
+
+# Check the data types and for any missing values
+print("\nData types and missing values:")
+print(df.info())
+
+# Check for null values
+if df.isnull().values.any():
+    print("\nThere are missing values in the dataset.")
+else:
+    print("\nNo missing values in the dataset.")
+
+# Exploratory Data Analysis
+# Visualize the distribution of features
+df.hist(bins=10, figsize=(10, 10))
+plt.show()
+
+# Visualize the correlation matrix
+plt.figure(figsize=(12, 8))
+sns.heatmap(df.corr(), annot=True, fmt=".2f")
+plt.title('Correlation Heatmap')
+plt.show()
+
+# Countplot of the target variable (Outcome)
+sns.countplot(x='Outcome', data=df, palette='Set1')
+plt.title('Count of Outcomes')
+plt.show()
+
+# Box plot for outlier visualization
+sns.set(style="whitegrid")
+plt.figure(figsize=(15, 6))
+df.boxplot()
+plt.title('Box Plot for Feature Distribution')
+plt.xticks(rotation=45)
+plt.show()
+
+# Remove outliers based on IQR
+Q1 = df.quantile(0.25)
+Q3 = df.quantile(0.75)
+IQR = Q3 - Q1
+
+# Outlier removal
+df_cleaned = df[~((df < (Q1 - 1.5 * IQR)) | (df > (Q3 + 1.5 * IQR))).any(axis=1)]
+
+# Display shapes before and after outlier removal
+print(f"Shape before outlier removal: {df.shape}")
+print(f"Shape after outlier removal: {df_cleaned.shape}")
+
+
+
+---------------------------------cbc NER----------------------------
+# Import necessary libraries
+import spacy
+import pandas as pd
+
+# Load spaCy's English language model
+nlp = spacy.load('en_core_web_sm')
+
+# Load the dataset (adjust the path as needed)
+df = pd.read_csv('cbc.csv')
+
+# Define a function to extract entities from medical text
+def extract_entities(text):
+    doc = nlp(text)
+    entities = [(ent.text, ent.label_) for ent in doc.ents]
+    return entities
+
+# Apply the entity extraction function to the medical reports
+df['Entities'] = df['long_title'].apply(extract_entities)
+
+# Filter the rows where entities were extracted (i.e., non-empty entities)
+df_with_entities = df[df['Entities'].apply(len) > 0]
+
+# Show only the rows where entities are extracted
+print(df_with_entities[['subject_id', 'long_title', 'Entities']])
+
+# Save the DataFrame with entities back to a CSV file
+output_filename = 'cbc_with_entities.csv'
+df_with_entities.to_csv(output_filename, index=False)
+
+
+--------------------------------------------explain AI-------------------------
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from lime.lime_text import LimeTextExplainer
+from sklearn.pipeline import make_pipeline
+
+# Step 1: Create a synthetic healthcare dataset
+data = {
+    'text': [
+        "The doctor was very helpful and attentive during my visit.",
+        "I had a terrible experience with the hospital staff.",
+        "The treatment was effective and I feel much better now.",
+        "The waiting time was too long, and the nurses were rude.",
+        "Great service! The team was very professional.",
+        "I wouldn't recommend this clinic due to poor service."
+    ],
+    'sentiment': ['Positive', 'Negative', 'Positive', 'Negative', 'Positive', 'Negative']
+}
+
+# Create DataFrame and encode sentiments
+df = pd.DataFrame(data)
+df['label'] = df['sentiment'].map({'Positive': 1, 'Negative': 0})
+
+# Split dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(df['text'], df['label'], test_size=0.2, random_state=42)
+
+# Step 2: Train a machine learning model
+model = make_pipeline(CountVectorizer(), MultinomialNB())
+model.fit(X_train, y_train)
+
+# Step 3: Use LIME to explain predictions
+explainer = LimeTextExplainer(class_names=['Negative', 'Positive'])
+text_instance = X_test.iloc[0]  # Change index to analyze different samples
+exp = explainer.explain_instance(text_instance, model.predict_proba, num_features=5)
+
+# Display explanation and prediction probabilities
+exp.show_in_notebook(text=True)
+pred_prob = model.predict_proba([text_instance])[0]
+print(f"Prediction probabilities for '{text_instance}': Negative: {pred_prob[0]:.4f}, Positive: {pred_prob[1]:.4f}")
+
+# Visualize the explanation
+exp.as_pyplot_figure()
+plt.title('LIME Explanation for Healthcare Text Classification')
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import yfinance as yf
 import streamlit as st
 from dotenv import load_dotenv
